@@ -10,20 +10,42 @@ const analyzer = new SonnetAnalyzer(dictionary);
 // Dictionary loading state
 let dictionaryLoaded = false;
 
-// Load dictionary from remote source (saves space in the hosting repository)
+// Check if running in Tauri (desktop app)
+const isTauri = '__TAURI__' in window;
+
+// Load dictionary from remote source (web) or local file (Tauri)
 async function loadDictionary() {
   try {
-    const response = await fetch(DATA_URLS.cmuDict);
-    if (!response.ok) {
-      throw new Error(`Failed to load dictionary: ${response.statusText}`);
+    let dictionaryData;
+    
+    if (isTauri) {
+      // Desktop app: load from bundled local file
+      console.log('Loading dictionary from local file (Tauri mode)...');
+      const response = await fetch('/data/cmu-dict-sample.json');
+      if (!response.ok) {
+        throw new Error(`Failed to load local dictionary: ${response.statusText}`);
+      }
+      dictionaryData = await response.json();
+      console.log('Dictionary loaded successfully from local file');
+    } else {
+      // Web app: load from GitHub (saves hosting space)
+      console.log('Loading dictionary from GitHub (web mode)...');
+      const response = await fetch(DATA_URLS.cmuDict);
+      if (!response.ok) {
+        throw new Error(`Failed to load dictionary: ${response.statusText}`);
+      }
+      dictionaryData = await response.json();
+      console.log('Dictionary loaded successfully from GitHub repository');
     }
-    const dictionaryData = await response.json();
+    
     await dictionary.loadDictionary(dictionaryData);
     dictionaryLoaded = true;
-    console.log('Dictionary loaded successfully from GitHub repository');
   } catch (error) {
     console.error('Error loading dictionary:', error);
-    alert('Failed to load pronunciation dictionary. Please check your internet connection.');
+    const errorMsg = isTauri 
+      ? 'Failed to load pronunciation dictionary from local files.'
+      : 'Failed to load pronunciation dictionary. Please check your internet connection.';
+    alert(errorMsg);
   }
 }
 

@@ -1,5 +1,30 @@
+# Dependencies
 node_modules/
+
+# Build outputs
 dist/
+dist-ssr/
+
+# Tauri build outputs
+src-tauri/target/
+src-tauri/Cargo.lock
+
+# Logs
 *.log
-.DS_Store
+npm-debug.log*
+
+# Environment
 .env
+.env.local
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+temp-pages-repo/

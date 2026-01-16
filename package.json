@@ -8,7 +8,10 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "deploy": "pwsh ./deploy-to-pages.ps1",
-    "deploy:bash": "bash ./deploy-to-pages.sh"
+    "deploy:bash": "bash ./deploy-to-pages.sh",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "keywords": ["sonnet", "poetry", "rhyme", "meter", "stress"],
   "author": "",
@@ -16,6 +19,10 @@
   "devDependencies": {
     "@types/node": "^25.0.9",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "@tauri-apps/cli": "^2.1.0"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.1.1"
   }
 }

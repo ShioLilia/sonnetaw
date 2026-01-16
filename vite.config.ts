@@ -1,18 +1,24 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/src/sonnetaw/', // 部署到 ShioLilia.github.io/src/sonnetaw/
+  base: process.env.TAURI_ENV ? '/' : '/src/sonnetaw/', // Tauri 使用根路径，Web 使用子路径
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: true,
     rollupOptions: {
-      // 排除字典文件，不打包到构建产物中
       external: [],
       output: {
-        // 优化代码分割
         manualChunks: undefined
       }
     }
-  }
+  },
+  // 确保开发服务器可以被 Tauri 访问
+  server: {
+    port: 5173,
+    strictPort: true,
+    host: '127.0.0.1'
+  },
+  // 在 Tauri 模式下复制数据文件
+  publicDir: 'public'
 });

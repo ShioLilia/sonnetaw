@@ -2,7 +2,14 @@
 
 A web application for checking stress patterns (meter) and rhyme schemes when writing sonnets in English.
 
+**🖥️ Now available as a desktop app!** - Cross-platform support for Windows, macOS, and Linux with offline functionality.
+
 ![Sonnet Checker Screenshot](https://github.com/user-attachments/assets/91209b56-0571-473c-8b2d-1493c36bad6a)
+
+## 🎯 Available Versions
+
+- **🌐 Web App**: https://ShioLilia.github.io/src/sonnetaw/ (requires internet)
+- **💻 Desktop App**: Download standalone executable (offline, no internet required)
 
 ## Features
 
@@ -29,12 +36,34 @@ A web application for checking stress patterns (meter) and rhyme schemes when wr
 
 ## Getting Started
 
-### Prerequisites
+### 🌐 Web Version (Online)
 
-- Node.js (v16 or higher)
-- npm or yarn
+Visit **https://ShioLilia.github.io/src/sonnetaw/** to use the web version immediately.
 
-### Installation
+### 💻 Desktop Version (Offline)
+
+See [TAURI_BUILD.md](TAURI_BUILD.md) for detailed build instructions.
+
+**Quick Start:**
+```bash
+# Install dependencies
+npm install
+
+# Run in development mode
+npm run tauri:dev
+
+# Build for production
+npm run tauri:build
+```
+
+Or use the build wizard (Windows):
+```powershell
+.\build-tauri.ps1
+```
+
+### 🧪 Web Development
+
+For web-only development:
 
 ```bash
 # Clone the repository
