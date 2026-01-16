@@ -1,14 +1,34 @@
 import { DictionaryService } from './dictionary';
 import { SonnetAnalyzer } from './analyzer';
 import type { SonnetAnalysis, LineAnalysis } from './types';
-import dictionaryData from '../data/cmu-dict-sample.json';
+import { DATA_URLS } from './config';
 
 // Initialize services
 const dictionary = new DictionaryService();
 const analyzer = new SonnetAnalyzer(dictionary);
 
-// Load dictionary
-dictionary.loadDictionary(dictionaryData);
+// Dictionary loading state
+let dictionaryLoaded = false;
+
+// Load dictionary from remote source (saves space in the hosting repository)
+async function loadDictionary() {
+  try {
+    const response = await fetch(DATA_URLS.cmuDict);
+    if (!response.ok) {
+      throw new Error(`Failed to load dictionary: ${response.statusText}`);
+    }
+    const dictionaryData = await response.json();
+    await dictionary.loadDictionary(dictionaryData);
+    dictionaryLoaded = true;
+    console.log('Dictionary loaded successfully from GitHub repository');
+  } catch (error) {
+    console.error('Error loading dictionary:', error);
+    alert('Failed to load pronunciation dictionary. Please check your internet connection.');
+  }
+}
+
+// Load dictionary on startup
+loadDictionary();
 
 // DOM elements
 const poemInput = document.getElementById('poemInput') as HTMLTextAreaElement;
@@ -178,6 +198,11 @@ analyzeBtn.addEventListener('click', () => {
 
   if (!text) {
     alert('Please enter a sonnet to analyze.');
+    return;
+  }
+
+  if (!dictionaryLoaded) {
+    alert('Dictionary is still loading. Please wait a moment and try again.');
     return;
   }
 

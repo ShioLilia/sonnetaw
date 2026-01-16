@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && cd dist && git init && git add -A && git commit -m 'Deploy' && git push -f https://github.com/ShioLilia/ShioLilia.github.io.git main:gh-pages"
+    "deploy": "pwsh ./deploy-to-pages.ps1",
+    "deploy:bash": "bash ./deploy-to-pages.sh"
   },
   "keywords": ["sonnet", "poetry", "rhyme", "meter", "stress"],
   "author": "",
