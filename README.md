@@ -93,7 +93,24 @@ npm run build
 npm run preview
 ```
 
-The built files will be in the `dist/` directory, ready to deploy to any static hosting service.
+The built files will be in the `dist/` directory.
+
+### 🌐 Deploy to GitHub Pages
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed manual deployment instructions.
+
+**Quick steps:**
+1. Run `npm run build`
+2. Copy `dist/*` to `ShioLilia.github.io/src/sonnetaw/`
+3. Commit and push
+
+**Windows users can use:**
+```powershell
+.\copy-to-pages.ps1
+```
+(Edit the script to set your repository path first)
+
+Access at: https://ShioLilia.github.io/src/sonnetaw/
 
 ## Usage
 

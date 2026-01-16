@@ -26,5 +26,5 @@ export function getRawUrl(repo: typeof GITHUB_CONFIG.devRepo, filePath: string):
 
 // 数据文件路径
 export const DATA_URLS = {
-  cmuDict: getRawUrl(GITHUB_CONFIG.devRepo, 'data/cmu-dict-sample.json')
+  cmuDict: getRawUrl(GITHUB_CONFIG.devRepo, 'public/data/cmu-dict.json')
 };

@@ -21,7 +21,7 @@ async function loadDictionary() {
     if (isTauri) {
       // Desktop app: load from bundled local file
       console.log('Loading dictionary from local file (Tauri mode)...');
-      const response = await fetch('/data/cmu-dict-sample.json');
+      const response = await fetch('/data/cmu-dict.json');
       if (!response.ok) {
         throw new Error(`Failed to load local dictionary: ${response.statusText}`);
       }
