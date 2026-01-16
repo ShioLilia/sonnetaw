@@ -23,8 +23,10 @@ export function tokenizeLine(line: string): string[] {
  * for contractions like "it's" or "don't"
  */
 export function removePunctuation(word: string): string {
+  // First normalize all apostrophe variants to ASCII apostrophe
+  const normalized = word.replace(/['']/g, "'");
   // Keep letters and apostrophes, remove everything else
-  return word.replace(/[^a-zA-Z']/g, '');
+  return normalized.replace(/[^a-zA-Z']/g, '');
 }
 
 /**

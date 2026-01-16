@@ -64,23 +64,24 @@ export class DictionaryService {
    * The rhyme key consists of phonemes from the last primary stressed vowel to the end
    */
   extractRhymeKey(phonemes: string[]): string {
-    // Find the last primary stress (1)
-    let lastStressIndex = -1;
+    // Find the last vowel (phoneme with stress marker 0, 1, or 2)
+    let lastVowelIndex = -1;
     for (let i = phonemes.length - 1; i >= 0; i--) {
-      if (phonemes[i].match(/1$/)) {
-        lastStressIndex = i;
+      if (phonemes[i].match(/[012]$/)) {
+        lastVowelIndex = i;
         break;
       }
     }
 
-    if (lastStressIndex === -1) {
-      // No primary stress found, use all phonemes
-      return phonemes.map(p => p.replace(/[012]$/, '')).join('-');
+    if (lastVowelIndex === -1) {
+      // No vowel found in this word (all consonants), return empty
+      // The caller should look for the previous vowel in the line
+      return '';
     }
 
-    // Return from stressed vowel to end, removing stress markers
+    // Return from last vowel to end, removing stress markers
     return phonemes
-      .slice(lastStressIndex)
+      .slice(lastVowelIndex)
       .map(p => p.replace(/[012]$/, ''))
       .join('-');
   }

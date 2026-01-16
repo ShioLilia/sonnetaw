@@ -69,4 +69,5 @@ export interface SonnetAnalysis {
   meterValid: boolean;
   rhymeIssues: string[];
   meterIssues: string[];
+  rhymeGroups: { [letter: string]: number[] }; // Map rhyme letters to line indices
 }

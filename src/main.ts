@@ -21,7 +21,7 @@ async function loadDictionary() {
     if (isTauri) {
       // Desktop app: load from bundled local file
       console.log('Loading dictionary from local file (Tauri mode)...');
-      const response = await fetch('/data/cmu-dict.json');
+      const response = await fetch('/data/eng-cmu.json');
       if (!response.ok) {
         throw new Error(`Failed to load local dictionary: ${response.statusText}`);
       }
@@ -59,13 +59,78 @@ const analyzeBtn = document.getElementById('analyzeBtn') as HTMLButtonElement;
 const output = document.getElementById('output') as HTMLDivElement;
 
 /**
+ * Get color for rhyme scheme letter
+ */
+function getRhymeColor(letter: string): string {
+  const colors: { [key: string]: string } = {
+    'A': '#8B4513', // Saddle Brown
+    'B': '#4682B4', // Steel Blue  
+    'C': '#6B8E23', // Olive Drab
+    'D': '#B8860B', // Dark Goldenrod
+    'E': '#8B008B', // Dark Magenta
+    'F': '#CD5C5C', // Indian Red
+    'G': '#2F4F4F', // Dark Slate Gray
+    'H': '#556B2F', // Dark Olive Green
+  };
+  return colors[letter] || '#666';
+}
+
+/**
+ * Find which rhyme group has issues and which lines to highlight
+ */
+function getRhymeErrorLines(analysis: SonnetAnalysis): Set<number> {
+  const errorLines = new Set<number>();
+  
+  // Check each rhyme group
+  for (const [letter, lineIndices] of Object.entries(analysis.rhymeGroups)) {
+    if (lineIndices.length <= 1) continue; // Skip single-line groups
+    
+    // Get rhyme keys for this group
+    const rhymeKeys = lineIndices.map(i => analysis.lines[i].rhymeKey);
+    const validRhymes = rhymeKeys.filter(r => r !== '');
+    const uniqueRhymes = new Set(validRhymes);
+    
+    // If there are mismatches, highlight the minority lines
+    if (uniqueRhymes.size > 1) {
+      const rhymeCounts = new Map<string, number[]>();
+      lineIndices.forEach((lineIdx, i) => {
+        const key = rhymeKeys[i];
+        if (!rhymeCounts.has(key)) {
+          rhymeCounts.set(key, []);
+        }
+        rhymeCounts.get(key)!.push(lineIdx);
+      });
+      
+      // Find the rhyme with fewer occurrences
+      let minCount = Infinity;
+      let minorityLines: number[] = [];
+      for (const [key, lines] of rhymeCounts.entries()) {
+        if (lines.length < minCount) {
+          minCount = lines.length;
+          minorityLines = lines;
+        }
+      }
+      
+      // Mark minority lines as errors
+      minorityLines.forEach(idx => errorLines.add(idx));
+    }
+  }
+  
+  return errorLines;
+}
+
+/**
  * Render a single line with syllable highlighting
  */
-function renderLine(line: LineAnalysis, rhymeLetter: string, analysis: SonnetAnalysis): HTMLElement {
+function renderLine(line: LineAnalysis, rhymeLetter: string, analysis: SonnetAnalysis, rhymeErrorLines: Set<number>): HTMLElement {
   const lineDiv = document.createElement('div');
   lineDiv.className = 'line';
   
-  if (!line.meterValid) {
+  // Check if this line has meter issues (skip lines with too few/many syllables)
+  const shouldCheckMeter = line.words.length > 0 && 
+    Math.abs(line.stressPattern.length - (line.expectedStressPattern?.length || 10)) <= 2;
+  
+  if (shouldCheckMeter && !line.meterValid) {
     lineDiv.classList.add('meter-invalid');
   }
 
@@ -99,8 +164,8 @@ function renderLine(line: LineAnalysis, rhymeLetter: string, analysis: SonnetAna
       syllableSpan.className = `syllable ${stressClass}`;
       syllableSpan.textContent = wordText;
       
-      // Check if any syllable has meter error
-      if (!line.meterValid && line.expectedStressPattern) {
+      // Check if any syllable has meter error (only if line should be checked)
+      if (shouldCheckMeter && !line.meterValid && line.expectedStressPattern) {
         let globalSyllableIndex = 0;
         // Calculate starting position in line
         for (const w of line.words) {
@@ -114,7 +179,9 @@ function renderLine(line: LineAnalysis, rhymeLetter: string, analysis: SonnetAna
           const expectedIndex = globalSyllableIndex + i;
           if (expectedIndex < line.expectedStressPattern.length) {
             const expected = line.expectedStressPattern[expectedIndex];
-            if (expected === 1 && syllable.stress !== 1) {
+            const actual = syllable.stress;
+            // Mark as error if stress doesn't match expectation
+            if ((expected === 1 && actual !== 1) || (expected === 0 && actual === 1)) {
               syllableSpan.classList.add('meter-error');
               break;
             }
@@ -125,20 +192,29 @@ function renderLine(line: LineAnalysis, rhymeLetter: string, analysis: SonnetAna
       syllableSpan.title = `Syllables: ${word.syllables.length}, Stress pattern: ${word.syllables.map(s => s.stress).join('')}`;
       wordSpan.appendChild(syllableSpan);
     } else {
-      // Word not found in dictionary
-      wordSpan.textContent = word.originalWord;
-      wordSpan.style.color = '#999';
-      wordSpan.title = 'Word not found in dictionary';
+      // Word not found in dictionary - add gray background
+      const notFoundSpan = document.createElement('span');
+      notFoundSpan.className = 'word-not-found';
+      notFoundSpan.textContent = word.originalWord;
+      notFoundSpan.title = 'Word not found in dictionary';
+      wordSpan.appendChild(notFoundSpan);
     }
 
     lineDiv.appendChild(wordSpan);
     lineDiv.appendChild(document.createTextNode(' '));
   }
 
-  // Add rhyme marker
+  // Add rhyme marker with color and optional error highlight
   const rhymeMarker = document.createElement('span');
   rhymeMarker.className = 'rhyme-marker';
   rhymeMarker.textContent = rhymeLetter;
+  rhymeMarker.style.color = getRhymeColor(rhymeLetter);
+  
+  // Highlight rhyme marker if this line has a rhyme error
+  if (rhymeErrorLines.has(line.lineNumber - 1)) {
+    rhymeMarker.classList.add('rhyme-error');
+  }
+  
   lineDiv.appendChild(rhymeMarker);
 
   // Add line text as tooltip
@@ -153,11 +229,14 @@ function renderLine(line: LineAnalysis, rhymeLetter: string, analysis: SonnetAna
 function renderAnalysis(analysis: SonnetAnalysis): void {
   output.innerHTML = '';
 
+  // Get rhyme error lines
+  const rhymeErrorLines = getRhymeErrorLines(analysis);
+
   // Render lines
   const linesContainer = document.createElement('div');
   analysis.lines.forEach((line, index) => {
     const rhymeLetter = analysis.form.rhymeScheme[index] || '?';
-    const lineElement = renderLine(line, rhymeLetter, analysis);
+    const lineElement = renderLine(line, rhymeLetter, analysis, rhymeErrorLines);
     linesContainer.appendChild(lineElement);
   });
   output.appendChild(linesContainer);

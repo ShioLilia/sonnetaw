@@ -126,8 +126,8 @@
     }
 
     .line.meter-invalid {
-      background-color: #ffe0e0;
-      border-left: 4px solid #ff4444;
+      background-color: #fff4f4;
+      border-left: 4px solid #ffb3b3;
     }
 
     .line-number {
@@ -162,18 +162,29 @@
     }
 
     .syllable.meter-error {
-      background-color: #ff8a80 !important;
+      background-color: #ffc9c9 !important;
+      border: 1px solid #ff9999;
+    }
+
+    .word-not-found {
+      background-color: #e8e8e8;
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: #888;
     }
 
     .rhyme-marker {
       display: inline-block;
       margin-left: 10px;
       padding: 2px 8px;
-      background-color: #667eea;
-      color: white;
+      background-color: #f0f0f0;
       border-radius: 3px;
       font-size: 0.9em;
       font-weight: bold;
+    }
+
+    .rhyme-marker.rhyme-error {
+      background-color: #ffe0e0;
     }
 
     .summary {
@@ -200,15 +211,15 @@
     }
 
     .summary-item.invalid {
-      background-color: #ffcdd2;
-      border-left: 4px solid #f44336;
+      background-color: #fff4f4;
+      border-left: 4px solid #ffb3b3;
     }
 
     .issue {
       margin-top: 5px;
       padding: 5px;
       font-size: 0.9em;
-      color: #d32f2f;
+      color: #cc5555;
     }
 
     .legend {
@@ -287,8 +298,12 @@ Thou art more lovely and more temperate..."></textarea>
             <span>Secondary Stress</span>
           </div>
           <div class="legend-item">
-            <span class="legend-box" style="background-color: #ff8a80;"></span>
+            <span class="legend-box" style="background-color: #ffc9c9; border: 1px solid #ff9999;"></span>
             <span>Meter Error</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-box" style="background-color: #e8e8e8;"></span>
+            <span>Not in Dictionary</span>
           </div>
         </div>
       </div>
