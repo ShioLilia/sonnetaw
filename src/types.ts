@@ -59,6 +59,7 @@ export interface MeterPattern {
   description: string;
   stressPattern: StressPattern; // Expected pattern per line
   syllableCount: number; // Expected syllables per line
+  type?: 'iambic' | 'trochaic' | 'dactylic' | 'anapestic' | 'other'; // Meter type for checking rules
 }
 
 // Sonnet form definition

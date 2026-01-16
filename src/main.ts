@@ -252,15 +252,16 @@ function renderLine(line: LineAnalysis, rhymeLetter: string, analysis: SonnetAna
           globalSyllableIndex += w.syllables.length;
         }
         
-        // Check each syllable
+        // Check each syllable - only mark "heavy to light" errors (1→0)
         for (let i = 0; i < word.syllables.length; i++) {
           const syllable = word.syllables[i];
           const expectedIndex = globalSyllableIndex + i;
           if (expectedIndex < line.expectedStressPattern.length) {
             const expected = line.expectedStressPattern[expectedIndex];
             const actual = syllable.stress;
-            // Mark as error if stress doesn't match expectation
-            if ((expected === 1 && actual !== 1) || (expected === 0 && actual === 1)) {
+            // Only mark as error if expected stress (1) but got unstressed (0 or 2)
+            // Allow light→heavy variations (0→1)
+            if (expected === 1 && actual !== 1) {
               syllableSpan.classList.add('meter-error');
               break;
             }
@@ -307,6 +308,28 @@ function renderLine(line: LineAnalysis, rhymeLetter: string, analysis: SonnetAna
  */
 function renderAnalysis(analysis: SonnetAnalysis): void {
   output.innerHTML = '';
+
+  // Check for unknown words and show warning
+  const unknownWords = new Set<string>();
+  for (const line of analysis.lines) {
+    for (const word of line.words) {
+      if (!word.found) {
+        unknownWords.add(word.originalWord);
+      }
+    }
+  }
+
+  // Show warning if there are unknown words
+  if (unknownWords.size > 0) {
+    const warning = document.createElement('div');
+    warning.className = 'warning-box';
+    warning.innerHTML = `
+      <strong>⚠️ Words not in dictionary:</strong> 
+      ${Array.from(unknownWords).join(', ')}
+      <br><small>Analysis may be less accurate. Syllable counts and rhymes are estimated.</small>
+    `;
+    output.appendChild(warning);
+  }
 
   // Get rhyme error lines
   const rhymeErrorLines = getRhymeErrorLines(analysis);

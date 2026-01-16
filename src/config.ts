@@ -26,14 +26,16 @@ const IAMBIC_PENTAMETER: MeterPattern = {
   name: 'Iambic Pentameter',
   description: 'Unstressed-stressed pattern, 10 syllables per line',
   stressPattern: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
-  syllableCount: 10
+  syllableCount: 10,
+  type: 'iambic'
 };
 
 const IAMBIC_HEXAMETER: MeterPattern = {
   name: 'Iambic Hexameter',
   description: 'Unstressed-stressed pattern, 12 syllables per line',
   stressPattern: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
-  syllableCount: 12
+  syllableCount: 12,
+  type: 'iambic'
 };
 
 // 英语诗歌形式

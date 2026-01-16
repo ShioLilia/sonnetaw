@@ -61,8 +61,9 @@ export class SonnetAnalyzer {
   /**
    * Check if stress pattern matches expected meter
    * Returns true if valid, false if there are issues
+   * Rules vary by meter type (iambic, trochaic, etc.)
    */
-  checkMeter(actual: StressPattern, expected: StressPattern): boolean {
+  checkMeter(actual: StressPattern, expected: StressPattern, meterType: string = 'iambic'): boolean {
     // If syllable count is way off (more than 2 syllables difference), skip checking
     if (Math.abs(actual.length - expected.length) > 2) {
       return false; // Will be handled as unchecked line
@@ -73,17 +74,56 @@ export class SonnetAnalyzer {
       return false;
     }
 
-    // Check if primary stresses (1) are in the right positions
-    // Also check for unstressed positions that should be stressed
+    // Apply checking rules based on meter type
+    if (meterType === 'iambic') {
+      return this.checkIambicMeter(actual, expected);
+    } else {
+      // For other meter types, use strict checking for now
+      return this.checkStrictMeter(actual, expected);
+    }
+  }
+
+  /**
+   * Iambic meter checking (抑扬格)
+   * Lenient: allows "light→heavy" (0→1), but flags:
+   * - "heavy→light" (1→0): wrong stress position
+   * - "light→light" (0→0) when expecting heavy (1): missing stress
+   */
+  private checkIambicMeter(actual: StressPattern, expected: StressPattern): boolean {
     for (let i = 0; i < expected.length; i++) {
-      if (expected[i] === 1 && actual[i] !== 1) {
-        return false; // Expected stress but got unstressed
-      }
-      if (expected[i] === 0 && actual[i] === 1) {
-        return false; // Expected unstressed but got stress
+      if (expected[i] === 1) {
+        // Expected stressed position
+        if (actual[i] === 0) {
+          // Got unstressed (0) when expecting stressed (1) - ERROR: "轻轻"
+          return false;
+        }
+        // Allow actual[i] === 1 (correct) or actual[i] === 2 (secondary stress, acceptable)
+      } else {
+        // Expected unstressed position (expected[i] === 0)
+        if (actual[i] === 1) {
+          // Got stressed (1) in unstressed position - ALLOWED for flexibility
+          // (单音节词可以轻读)
+          continue;
+        }
+        // actual[i] === 0 or 2 are both fine for unstressed positions
       }
     }
+    return true;
+  }
 
+  /**
+   * Strict meter checking for non-iambic meters
+   * Requires exact match of stress pattern
+   */
+  private checkStrictMeter(actual: StressPattern, expected: StressPattern): boolean {
+    for (let i = 0; i < expected.length; i++) {
+      if (expected[i] === 1 && actual[i] !== 1) {
+        return false; // Expected primary stress, got something else
+      }
+      if (expected[i] === 0 && actual[i] === 1) {
+        return false; // Expected unstressed, got primary stress
+      }
+    }
     return true;
   }
 
@@ -154,7 +194,8 @@ export class SonnetAnalyzer {
       analysis.expectedStressPattern = form.meter.stressPattern;
       analysis.meterValid = this.checkMeter(
         analysis.stressPattern,
-        form.meter.stressPattern
+        form.meter.stressPattern,
+        form.meter.type || 'iambic' // Default to iambic if not specified
       );
 
       return analysis;
