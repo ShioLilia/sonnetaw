@@ -2,6 +2,14 @@
  * Core type definitions for the sonnet checker application
  */
 
+// Language configuration
+export interface LanguageConfig {
+  code: string; // e.g., 'en', 'zh', 'fr'
+  name: string; // e.g., 'English', '中文', 'Français'
+  dictionaryFile: string; // Filename in public/data/
+  poeticForms: SonnetForm[]; // Available forms for this language
+}
+
 // Pronunciation data from CMU dictionary
 export interface PronunciationEntry {
   word: string;
@@ -55,10 +63,12 @@ export interface MeterPattern {
 
 // Sonnet form definition
 export interface SonnetForm {
-  name: string;
+  id: string; // Unique identifier, e.g., 'shakespearean', 'dactylic_hexameter'
+  name: string; // Display name
+  description: string; // Brief description, e.g., 'ABAB CDCD EFEF GG'
   rhymeScheme: RhymeScheme; // e.g., ["A", "B", "A", "B", ...]
   meter: MeterPattern;
-  lineCount: number;
+  lineCount: number; // 0 for variable length
 }
 
 // Analysis result for the entire sonnet

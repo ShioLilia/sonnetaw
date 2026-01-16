@@ -71,6 +71,13 @@
       margin-bottom: 8px;
       font-weight: bold;
       color: #333;
+      font-size: 0.95em;
+    }
+
+    label small {
+      font-weight: normal;
+      color: #666;
+      font-size: 0.9em;
     }
 
     select {
@@ -80,6 +87,23 @@
       border-radius: 5px;
       font-size: 1em;
       font-family: inherit;
+      transition: border-color 0.3s;
+    }
+
+    select:hover {
+      border-color: #667eea;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
     }
 
     textarea {
@@ -253,6 +277,10 @@
       .main-content {
         grid-template-columns: 1fr;
       }
+      
+      .form-row {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -267,16 +295,30 @@
       <div class="panel">
         <h2>Input</h2>
         
-        <div class="form-group">
-          <label for="sonnetForm">Sonnet Form:</label>
-          <select id="sonnetForm">
-            <option value="shakespearean">Shakespearean (ABAB CDCD EFEF GG)</option>
-            <option value="petrarchan">Petrarchan (ABBAABBA CDECDE)</option>
-          </select>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="languageSelect">
+              Language
+              <small>(Select poetry language)</small>
+            </label>
+            <select id="languageSelect">
+              <option value="en">English</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="sonnetForm">
+              Poetic Form
+              <small>(Pattern and meter)</small>
+            </label>
+            <select id="sonnetForm">
+              <option value="shakespearean">Shakespearean</option>
+            </select>
+          </div>
         </div>
 
         <div class="form-group">
-          <label for="poemInput">Enter your sonnet (14 lines):</label>
+          <label for="poemInput">Enter your poem:</label>
           <textarea id="poemInput" placeholder="Shall I compare thee to a summer's day?
 Thou art more lovely and more temperate..."></textarea>
         </div>

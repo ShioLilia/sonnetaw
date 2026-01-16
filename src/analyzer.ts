@@ -9,34 +9,6 @@ import { DictionaryService } from './dictionary';
 import { tokenizeLine, removePunctuation } from './textProcessor';
 
 /**
- * Sonnet forms and their patterns
- */
-export const SONNET_FORMS: { [key: string]: SonnetForm } = {
-  shakespearean: {
-    name: 'Shakespearean (English) Sonnet',
-    rhymeScheme: ['A', 'B', 'A', 'B', 'C', 'D', 'C', 'D', 'E', 'F', 'E', 'F', 'G', 'G'],
-    meter: {
-      name: 'Iambic Pentameter',
-      description: 'Unstressed-stressed pattern, 10 syllables per line',
-      stressPattern: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
-      syllableCount: 10
-    },
-    lineCount: 14
-  },
-  petrarchan: {
-    name: 'Petrarchan (Italian) Sonnet',
-    rhymeScheme: ['A', 'B', 'B', 'A', 'A', 'B', 'B', 'A', 'C', 'D', 'E', 'C', 'D', 'E'],
-    meter: {
-      name: 'Iambic Pentameter',
-      description: 'Unstressed-stressed pattern, 10 syllables per line',
-      stressPattern: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
-      syllableCount: 10
-    },
-    lineCount: 14
-  }
-};
-
-/**
  * Sonnet analyzer service
  */
 export class SonnetAnalyzer {
@@ -172,8 +144,7 @@ export class SonnetAnalyzer {
   /**
    * Analyze an entire sonnet
    */
-  analyzeSonnet(text: string, formName: string = 'shakespearean'): SonnetAnalysis {
-    const form = SONNET_FORMS[formName] || SONNET_FORMS.shakespearean;
+  analyzeSonnet(text: string, form: SonnetForm): SonnetAnalysis {
     const lines = text.split('\n').filter(line => line.trim().length > 0);
     
     const lineAnalyses: LineAnalysis[] = lines.map((line, index) => {

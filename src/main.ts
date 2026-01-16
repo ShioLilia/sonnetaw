@@ -1,7 +1,7 @@
 import { DictionaryService } from './dictionary';
 import { SonnetAnalyzer } from './analyzer';
-import type { SonnetAnalysis, LineAnalysis } from './types';
-import { DATA_URLS } from './config';
+import type { SonnetAnalysis, LineAnalysis, SonnetForm } from './types';
+import { getDictionaryUrl, SUPPORTED_LANGUAGES } from './config';
 
 // Initialize services
 const dictionary = new DictionaryService();
@@ -9,28 +9,36 @@ const analyzer = new SonnetAnalyzer(dictionary);
 
 // Dictionary loading state
 let dictionaryLoaded = false;
+let currentLanguage = 'en'; // 当前使用的语言
+let currentForm: SonnetForm | null = null; // 当前选择的诗歌形式
 
 // Check if running in Tauri (desktop app)
 const isTauri = '__TAURI__' in window;
 
 // Load dictionary from remote source (web) or local file (Tauri)
-async function loadDictionary() {
+async function loadDictionary(languageCode: string = 'en') {
   try {
     let dictionaryData;
+    dictionaryLoaded = false; // 重置状态
     
     if (isTauri) {
       // Desktop app: load from bundled local file
-      console.log('Loading dictionary from local file (Tauri mode)...');
-      const response = await fetch('/data/eng-cmu.json');
+      console.log(`Loading dictionary from local file (Tauri mode) - Language: ${languageCode}...`);
+      const language = SUPPORTED_LANGUAGES.find(lang => lang.code === languageCode);
+      if (!language) {
+        throw new Error(`Unsupported language: ${languageCode}`);
+      }
+      const response = await fetch(`/data/${language.dictionaryFile}`);
       if (!response.ok) {
         throw new Error(`Failed to load local dictionary: ${response.statusText}`);
       }
       dictionaryData = await response.json();
-      console.log('Dictionary loaded successfully from local file');
+      console.log(`Dictionary loaded successfully from local file - ${language.name}`);
     } else {
       // Web app: load from GitHub (saves hosting space)
-      console.log('Loading dictionary from GitHub (web mode)...');
-      const response = await fetch(DATA_URLS.cmuDict);
+      console.log(`Loading dictionary from GitHub (web mode) - Language: ${languageCode}...`);
+      const dictionaryUrl = getDictionaryUrl(languageCode);
+      const response = await fetch(dictionaryUrl);
       if (!response.ok) {
         throw new Error(`Failed to load dictionary: ${response.statusText}`);
       }
@@ -38,7 +46,8 @@ async function loadDictionary() {
       console.log('Dictionary loaded successfully from GitHub repository');
     }
     
-    await dictionary.loadDictionary(dictionaryData);
+    await dictionary.loadDictionary(dictionaryData, languageCode);
+    currentLanguage = languageCode;
     dictionaryLoaded = true;
   } catch (error) {
     console.error('Error loading dictionary:', error);
@@ -53,10 +62,80 @@ async function loadDictionary() {
 loadDictionary();
 
 // DOM elements
+const languageSelect = document.getElementById('languageSelect') as HTMLSelectElement;
 const poemInput = document.getElementById('poemInput') as HTMLTextAreaElement;
 const sonnetForm = document.getElementById('sonnetForm') as HTMLSelectElement;
 const analyzeBtn = document.getElementById('analyzeBtn') as HTMLButtonElement;
 const output = document.getElementById('output') as HTMLDivElement;
+
+// Populate language selector
+function initLanguageSelector() {
+  languageSelect.innerHTML = '';
+  for (const lang of SUPPORTED_LANGUAGES) {
+    const option = document.createElement('option');
+    option.value = lang.code;
+    option.textContent = lang.name;
+    if (lang.code === currentLanguage) {
+      option.selected = true;
+    }
+    languageSelect.appendChild(option);
+  }
+}
+
+// Populate poetic form selector based on current language
+function updateFormSelector() {
+  sonnetForm.innerHTML = '';
+  const language = SUPPORTED_LANGUAGES.find(lang => lang.code === currentLanguage);
+  
+  if (!language || language.poeticForms.length === 0) {
+    const option = document.createElement('option');
+    option.textContent = 'No forms available';
+    option.disabled = true;
+    sonnetForm.appendChild(option);
+    currentForm = null;
+    return;
+  }
+
+  for (const form of language.poeticForms) {
+    const option = document.createElement('option');
+    option.value = form.id;
+    option.textContent = form.name;
+    option.title = form.description;
+    sonnetForm.appendChild(option);
+  }
+  
+  // Set the first form as current
+  if (language.poeticForms.length > 0) {
+    currentForm = language.poeticForms[0];
+  }
+}
+
+// Handle language change
+languageSelect.addEventListener('change', async () => {
+  const newLanguage = languageSelect.value;
+  if (newLanguage !== currentLanguage) {
+    console.log(`Switching language to: ${newLanguage}`);
+    output.innerHTML = '<p style="color: #999; font-style: italic;">Loading dictionary...</p>';
+    await loadDictionary(newLanguage);
+    if (dictionaryLoaded) {
+      updateFormSelector(); // Update available forms
+      output.innerHTML = '<p style="color: #999; font-style: italic;">Dictionary loaded. Ready to analyze.</p>';
+    }
+  }
+});
+
+// Handle form change
+sonnetForm.addEventListener('change', () => {
+  const formId = sonnetForm.value;
+  const language = SUPPORTED_LANGUAGES.find(lang => lang.code === currentLanguage);
+  if (language) {
+    currentForm = language.poeticForms.find(form => form.id === formId) || null;
+  }
+});
+
+// Initialize selectors
+initLanguageSelector();
+updateFormSelector();
 
 /**
  * Get color for rhyme scheme letter
@@ -295,7 +374,6 @@ function renderAnalysis(analysis: SonnetAnalysis): void {
  */
 analyzeBtn.addEventListener('click', () => {
   const text = poemInput.value.trim();
-  const form = sonnetForm.value;
 
   if (!text) {
     alert('Please enter a sonnet to analyze.');
@@ -307,8 +385,13 @@ analyzeBtn.addEventListener('click', () => {
     return;
   }
 
+  if (!currentForm) {
+    alert('Please select a poetic form.');
+    return;
+  }
+
   try {
-    const analysis = analyzer.analyzeSonnet(text, form);
+    const analysis = analyzer.analyzeSonnet(text, currentForm);
     renderAnalysis(analysis);
   } catch (error) {
     console.error('Analysis error:', error);

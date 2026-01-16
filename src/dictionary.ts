@@ -5,12 +5,21 @@ import type { PronunciationDict, Syllable, WordAnalysis } from './types';
  */
 export class DictionaryService {
   private dict: PronunciationDict = {};
+  private currentLanguage: string = 'en'; // 当前加载的语言
 
   /**
    * Load pronunciation dictionary from JSON data
    */
-  async loadDictionary(dictData: PronunciationDict): Promise<void> {
+  async loadDictionary(dictData: PronunciationDict, languageCode: string = 'en'): Promise<void> {
     this.dict = dictData;
+    this.currentLanguage = languageCode;
+  }
+
+  /**
+   * Get current language code
+   */
+  getCurrentLanguage(): string {
+    return this.currentLanguage;
   }
 
   /**
