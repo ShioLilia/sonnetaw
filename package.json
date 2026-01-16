@@ -1,0 +1,19 @@
+{
+  "name": "sonnetaw",
+  "version": "1.0.0",
+  "description": "a web app for checking words and stress when you write sonnets",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["sonnet", "poetry", "rhyme", "meter", "stress"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^25.0.9",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
+}
