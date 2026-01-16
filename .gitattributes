@@ -1,1 +1,3 @@
-inguist-language=Typescript
+data/ linguist-detectable=false
+public/data/ linguist-detectable=false
+
