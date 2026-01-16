@@ -225,52 +225,56 @@ function renderLine(line: LineAnalysis, rhymeLetter: string, analysis: SonnetAna
     wordSpan.className = 'word';
 
     if (word.found && word.syllables.length > 0) {
-      // Create a wrapper with stress pattern shown via background
+      // Get syllable boundaries for the word
+      const syllableBoundaries = dictionary.syllabifyWord(word.originalWord, word.syllables);
       const wordText = word.originalWord;
       
-      // For simplicity, highlight the whole word based on whether it has primary stress
-      const hasPrimaryStress = word.syllables.some(s => s.stress === 1);
-      const hasSecondaryStress = word.syllables.some(s => s.stress === 2);
-      
-      let stressClass = 'stress-0';
-      if (hasPrimaryStress) {
-        stressClass = 'stress-1';
-      } else if (hasSecondaryStress) {
-        stressClass = 'stress-2';
-      }
-      
-      const syllableSpan = document.createElement('span');
-      syllableSpan.className = `syllable ${stressClass}`;
-      syllableSpan.textContent = wordText;
-      
-      // Check if any syllable has meter error (only if line should be checked)
+      // Calculate global syllable index for meter checking
+      let globalSyllableIndex = 0;
       if (shouldCheckMeter && !line.meterValid && line.expectedStressPattern) {
-        let globalSyllableIndex = 0;
-        // Calculate starting position in line
         for (const w of line.words) {
           if (w === word) break;
           globalSyllableIndex += w.syllables.length;
         }
+      }
+      
+      // Render each syllable part separately
+      for (let i = 0; i < word.syllables.length; i++) {
+        const syllable = word.syllables[i];
+        const [start, end] = syllableBoundaries[i] || [0, wordText.length - 1];
+        const syllableText = wordText.substring(start, end + 1);
         
-        // Check each syllable - only mark "heavy to light" errors (1→0)
-        for (let i = 0; i < word.syllables.length; i++) {
-          const syllable = word.syllables[i];
+        // Determine stress class - only apply color to stressed syllables
+        let stressClass = 'stress-0';
+        if (syllable.stress === 1) {
+          stressClass = 'stress-1';
+        } else if (syllable.stress === 2) {
+          stressClass = 'stress-2';
+        }
+        
+        const syllableSpan = document.createElement('span');
+        syllableSpan.className = `syllable ${stressClass}`;
+        syllableSpan.textContent = syllableText;
+        
+        // Check for meter error on this specific syllable
+        if (shouldCheckMeter && !line.meterValid && line.expectedStressPattern) {
           const expectedIndex = globalSyllableIndex + i;
           if (expectedIndex < line.expectedStressPattern.length) {
             const expected = line.expectedStressPattern[expectedIndex];
             const actual = syllable.stress;
-            // Only mark as error if expected stress (1) but got unstressed (0 or 2)
-            // Allow light→heavy variations (0→1)
+            // Mark as error if expected stress (1) but got unstressed (0 or 2)
             if (expected === 1 && actual !== 1) {
               syllableSpan.classList.add('meter-error');
-              break;
             }
           }
         }
+        
+        syllableSpan.title = `Syllable ${i + 1}/${word.syllables.length}, Stress: ${syllable.stress}`;
+        wordSpan.appendChild(syllableSpan);
       }
       
-      syllableSpan.title = `Syllables: ${word.syllables.length}, Stress pattern: ${word.syllables.map(s => s.stress).join('')}`;
-      wordSpan.appendChild(syllableSpan);
+      // Add overall word tooltip
+      wordSpan.title = `Syllables: ${word.syllables.length}, Stress pattern: ${word.syllables.map(s => s.stress).join('')}`;
     } else {
       // Word not found in dictionary - add gray background
       const notFoundSpan = document.createElement('span');

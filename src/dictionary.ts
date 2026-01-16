@@ -217,6 +217,106 @@ export class DictionaryService {
   }
 
   /**
+   * Map phonemes to letter positions in the word
+   * Returns array of letter ranges for each syllable: [startIdx, endIdx]
+   */
+  syllabifyWord(word: string, syllables: Syllable[]): Array<[number, number]> {
+    const lower = word.toLowerCase();
+    const vowels = 'aeiouy';
+    const result: Array<[number, number]> = [];
+    
+    // Find all vowel positions in the word
+    const vowelPositions: number[] = [];
+    for (let i = 0; i < lower.length; i++) {
+      if (vowels.includes(lower[i])) {
+        vowelPositions.push(i);
+      }
+    }
+    
+    if (vowelPositions.length === 0 || syllables.length === 0) {
+      // No vowels or syllables, return whole word as one unit
+      return [[0, word.length - 1]];
+    }
+    
+    // If syllable count doesn't match vowel count, use simple division
+    if (syllables.length !== vowelPositions.length) {
+      // Fallback: divide word evenly
+      const avgLength = word.length / syllables.length;
+      for (let i = 0; i < syllables.length; i++) {
+        const start = Math.floor(i * avgLength);
+        const end = i === syllables.length - 1 ? word.length - 1 : Math.floor((i + 1) * avgLength) - 1;
+        result.push([start, end]);
+      }
+      return result;
+    }
+    
+    // Apply syllabification rules based on consonants between vowels
+    for (let i = 0; i < vowelPositions.length; i++) {
+      const vowelPos = vowelPositions[i];
+      let start: number;
+      let end: number;
+      
+      if (i === 0) {
+        // First syllable: starts from beginning
+        start = 0;
+      } else {
+        // Find consonants between this vowel and previous vowel
+        const prevVowel = vowelPositions[i - 1];
+        const consonantCount = vowelPos - prevVowel - 1;
+        
+        if (consonantCount === 0) {
+          // Two vowels adjacent: split between them
+          start = vowelPos;
+        } else if (consonantCount === 1) {
+          // One consonant: goes to current syllable
+          start = prevVowel + 1;
+        } else if (consonantCount === 2) {
+          // Two consonants: split 1+1
+          start = prevVowel + 2;
+        } else if (consonantCount === 3) {
+          // Three consonants: split 2+1
+          start = prevVowel + 3;
+        } else {
+          // Four or more: split evenly
+          const half = Math.floor(consonantCount / 2);
+          start = prevVowel + 1 + half;
+        }
+      }
+      
+      if (i === vowelPositions.length - 1) {
+        // Last syllable: goes to end
+        end = word.length - 1;
+      } else {
+        // Find split point with next syllable
+        const nextVowel = vowelPositions[i + 1];
+        const consonantCount = nextVowel - vowelPos - 1;
+        
+        if (consonantCount === 0) {
+          // Two vowels adjacent: include current vowel only
+          end = vowelPos;
+        } else if (consonantCount === 1) {
+          // One consonant: include current vowel only
+          end = vowelPos;
+        } else if (consonantCount === 2) {
+          // Two consonants: split 1+1, take first consonant
+          end = vowelPos + 1;
+        } else if (consonantCount === 3) {
+          // Three consonants: split 2+1, take first two
+          end = vowelPos + 2;
+        } else {
+          // Four or more: take half
+          const half = Math.floor(consonantCount / 2);
+          end = vowelPos + half;
+        }
+      }
+      
+      result.push([start, end]);
+    }
+    
+    return result;
+  }
+
+  /**
    * Analyze a single word
    */
   analyzeWord(word: string): WordAnalysis {
