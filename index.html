@@ -225,6 +225,10 @@
       font-weight: 500;
     }
 
+    .syllable.meter-correct-unstressed {
+      color: #34d399; /* 更浅的绿色 - 符合抑扬格位置的无重音 */
+    }
+
     .syllable.meter-error {
       background-color: #ffe4e4;
       padding: 2px 4px;
@@ -359,6 +363,27 @@
             <select id="sonnetForm">
               <option value="shakespearean">Shakespearean</option>
             </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="meterMode">
+              Meter Checking Mode
+              <small>(Strictness of meter validation)</small>
+            </label>
+            <select id="meterMode">
+              <option value="lenient">Lenient (Recommended)</option>
+              <option value="strict">Strict</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="intelligentMode">
+              <input type="checkbox" id="intelligentMode" checked style="width: auto; margin-right: 5px;">
+              Intelligent Mode
+              <small>(Estimate unknown words)</small>
+            </label>
           </div>
         </div>
 

@@ -86,6 +86,26 @@ export class DictionaryService {
   }
 
   /**
+   * Get all pronunciations for a word
+   * Returns all available pronunciations, or null if word not found
+   */
+  getAllPronunciations(word: string): string[][] | null {
+    const normalized = word.toLowerCase().replace(/[^a-z']/g, '');
+    
+    // Check custom dictionary first
+    if (this.customDict[normalized]?.length > 0) {
+      return this.customDict[normalized];
+    }
+    
+    // Then check main dictionary
+    const pronunciations = this.dict[normalized];
+    if (!pronunciations || pronunciations.length === 0) {
+      return null;
+    }
+    return pronunciations;
+  }
+
+  /**
    * Extract syllables from phonemes
    * A syllable contains one vowel sound (phonemes ending in 0, 1, or 2)
    */
@@ -451,18 +471,76 @@ export class DictionaryService {
   }
 
   /**
-   * Analyze a single word
+   * Analyze a single word with optional context for choosing best pronunciation
+   * @param word The word to analyze
+   * @param expectedStress Optional expected stress pattern for this position (for meter matching)
+   * @param preferredSyllableCount Optional preferred syllable count (for meter fitting)
    */
-  analyzeWord(word: string): WordAnalysis {
-    const phonemes = this.lookup(word);
+  analyzeWord(
+    word: string, 
+    expectedStress?: number,
+    preferredSyllableCount?: number
+  ): WordAnalysis {
+    const allPronunciations = this.getAllPronunciations(word);
     
-    if (!phonemes) {
+    if (!allPronunciations || allPronunciations.length === 0) {
       // Use fallback analysis for unknown words
       return this.createFallbackAnalysis(word);
     }
 
-    const syllables = this.extractSyllables(phonemes);
-    const rhymeKey = this.extractRhymeKey(phonemes);
+    // If only one pronunciation, use it
+    if (allPronunciations.length === 1) {
+      const phonemes = allPronunciations[0];
+      const syllables = this.extractSyllables(phonemes);
+      const rhymeKey = this.extractRhymeKey(phonemes);
+
+      return {
+        word: word.toLowerCase(),
+        originalWord: word,
+        syllables,
+        rhymeKey,
+        found: true
+      };
+    }
+
+    // Multiple pronunciations: try to select the best match
+    let bestPronunciation = allPronunciations[0];
+    let bestScore = -1;
+
+    for (const phonemes of allPronunciations) {
+      const syllables = this.extractSyllables(phonemes);
+      let score = 0;
+
+      // Prefer pronunciation matching expected syllable count
+      if (preferredSyllableCount !== undefined) {
+        if (syllables.length === preferredSyllableCount) {
+          score += 10;
+        } else {
+          // Penalize based on difference
+          score -= Math.abs(syllables.length - preferredSyllableCount) * 2;
+        }
+      }
+
+      // Prefer pronunciation matching expected stress (if single syllable word)
+      if (expectedStress !== undefined && syllables.length === 1) {
+        if (syllables[0].stress === expectedStress) {
+          score += 5;
+        } else if (expectedStress === 1 && syllables[0].stress > 0) {
+          score += 2; // Partial match for any stress
+        }
+      }
+
+      // Default: prefer fewer syllables (more common in poetry)
+      score -= syllables.length * 0.5;
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestPronunciation = phonemes;
+      }
+    }
+
+    const syllables = this.extractSyllables(bestPronunciation);
+    const rhymeKey = this.extractRhymeKey(bestPronunciation);
 
     return {
       word: word.toLowerCase(),

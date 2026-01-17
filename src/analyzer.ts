@@ -63,7 +63,12 @@ export class SonnetAnalyzer {
    * Returns true if valid, false if there are issues
    * Rules vary by meter type (iambic, trochaic, etc.)
    */
-  checkMeter(actual: StressPattern, expected: StressPattern, meterType: string = 'iambic'): boolean {
+  checkMeter(
+    actual: StressPattern, 
+    expected: StressPattern, 
+    meterType: string = 'iambic',
+    strict: boolean = false
+  ): boolean {
     // If syllable count is way off (more than 2 syllables difference), skip checking
     if (Math.abs(actual.length - expected.length) > 2) {
       return false; // Will be handled as unchecked line
@@ -71,16 +76,53 @@ export class SonnetAnalyzer {
 
     // Check if length matches
     if (actual.length !== expected.length) {
+      // In lenient mode, allow ±1 syllable difference by trying to fit
+      if (!strict && Math.abs(actual.length - expected.length) === 1) {
+        return this.checkMeterWithFitting(actual, expected, meterType);
+      }
       return false;
     }
 
     // Apply checking rules based on meter type
     if (meterType === 'iambic') {
-      return this.checkIambicMeter(actual, expected);
+      return strict ? this.checkStrictMeter(actual, expected) : this.checkIambicMeter(actual, expected);
     } else {
-      // For other meter types, use strict checking for now
+      // For other meter types, use strict checking
       return this.checkStrictMeter(actual, expected);
     }
+  }
+
+  /**
+   * Try to fit actual stress pattern to expected by skipping or padding
+   * Used in lenient mode when there's ±1 syllable difference
+   */
+  private checkMeterWithFitting(
+    actual: StressPattern,
+    expected: StressPattern,
+    meterType: string
+  ): boolean {
+    if (actual.length === expected.length + 1) {
+      // One extra syllable - try removing each position and check
+      for (let skip = 0; skip < actual.length; skip++) {
+        const fitted = actual.filter((_, i) => i !== skip);
+        if (meterType === 'iambic') {
+          if (this.checkIambicMeter(fitted, expected)) return true;
+        } else {
+          if (this.checkStrictMeter(fitted, expected)) return true;
+        }
+      }
+    } else if (actual.length === expected.length - 1) {
+      // One fewer syllable - try inserting unstressed at each position
+      for (let insert = 0; insert <= actual.length; insert++) {
+        const fitted = [...actual.slice(0, insert), 0 as const, ...actual.slice(insert)];
+        if (meterType === 'iambic') {
+          if (this.checkIambicMeter(fitted, expected)) return true;
+        } else {
+          if (this.checkStrictMeter(fitted, expected)) return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -184,7 +226,14 @@ export class SonnetAnalyzer {
   /**
    * Analyze an entire sonnet
    */
-  analyzeSonnet(text: string, form: SonnetForm): SonnetAnalysis {
+  analyzeSonnet(
+    text: string, 
+    form: SonnetForm, 
+    options: { strict?: boolean; intelligent?: boolean } = {}
+  ): SonnetAnalysis {
+    const strict = options.strict ?? false;
+    const intelligent = options.intelligent ?? true;
+    
     const lines = text.split('\n').filter(line => line.trim().length > 0);
     
     const lineAnalyses: LineAnalysis[] = lines.map((line, index) => {
@@ -195,7 +244,8 @@ export class SonnetAnalyzer {
       analysis.meterValid = this.checkMeter(
         analysis.stressPattern,
         form.meter.stressPattern,
-        form.meter.type || 'iambic' // Default to iambic if not specified
+        form.meter.type || 'iambic', // Default to iambic if not specified
+        strict
       );
 
       return analysis;
