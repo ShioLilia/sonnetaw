@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rhyme Helper - Sonnet Writing Assistant</title>
+    <link rel="icon" href="/src/indexbcg.png" type="image/x-icon">
+    <link rel="shortcut icon" href="/src/indexbcg.png" type="image/x-icon">
   <style>
     * {
       margin: 0;
@@ -220,9 +222,15 @@
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       }
     }
+    body {
+        background-image: url('/src/bg/inside.png');
+        background-attachment: fixed;
+        background-position: center;
+        background-size: cover;
+      }
   </style>
 </head>
-<body>
+<body data-custom-bg>   
   <div class="container">
     <header>
       <h1>🎵 Rhyme Helper</h1>

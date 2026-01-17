@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <link rel="icon" href="/src/indexbcg.png" type="image/x-icon">
+    <link rel="icon" href="/src/indexbcg.png" type="image/x-icon">
     <link rel="shortcut icon" href="/src/indexbcg.png" type="image/x-icon">
   <title>Sonnet Checker - Check Rhyme and Meter</title>
   <style>
@@ -328,9 +328,15 @@
         grid-template-columns: 1fr;
       }
     }
+      body {
+        background-image: url('/src/bg/inside.png');
+        background-attachment: fixed;
+        background-position: center;
+        background-size: cover;
+      }
   </style>
 </head>
-<body>
+<body data-custom-bg>
   <div class="container">
     <header>
       <h1>🌹 Sonnet Checker</h1>
