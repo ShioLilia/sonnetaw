@@ -66,6 +66,7 @@ const languageSelect = document.getElementById('languageSelect') as HTMLSelectEl
 const poemInput = document.getElementById('poemInput') as HTMLTextAreaElement;
 const sonnetForm = document.getElementById('sonnetForm') as HTMLSelectElement;
 const analyzeBtn = document.getElementById('analyzeBtn') as HTMLButtonElement;
+const clearBtn = document.getElementById('clearBtn') as HTMLButtonElement;
 const output = document.getElementById('output') as HTMLDivElement;
 
 // Populate language selector
@@ -169,7 +170,7 @@ function getRhymeErrorLines(analysis: SonnetAnalysis): Set<number> {
     const validRhymes = rhymeKeys.filter(r => r !== '');
     const uniqueRhymes = new Set(validRhymes);
     
-    // If there are mismatches, highlight the minority lines
+    // If there are mismatches, use first line's rhyme as baseline
     if (uniqueRhymes.size > 1) {
       const rhymeCounts = new Map<string, number[]>();
       lineIndices.forEach((lineIdx, i) => {
@@ -180,18 +181,25 @@ function getRhymeErrorLines(analysis: SonnetAnalysis): Set<number> {
         rhymeCounts.get(key)!.push(lineIdx);
       });
       
-      // Find the rhyme with fewer occurrences
-      let minCount = Infinity;
-      let minorityLines: number[] = [];
-      for (const [key, lines] of rhymeCounts.entries()) {
-        if (lines.length < minCount) {
-          minCount = lines.length;
-          minorityLines = lines;
+      // Determine baseline rhyme: use first line's rhyme, or most common if first is empty
+      let baselineRhyme = rhymeKeys[0];
+      if (baselineRhyme === '') {
+        // First line has no rhyme, find the most common rhyme
+        let maxCount = 0;
+        for (const [key, lines] of rhymeCounts.entries()) {
+          if (key !== '' && lines.length > maxCount) {
+            maxCount = lines.length;
+            baselineRhyme = key;
+          }
         }
       }
       
-      // Mark minority lines as errors
-      minorityLines.forEach(idx => errorLines.add(idx));
+      // Mark all lines that don't match the baseline as errors
+      lineIndices.forEach((lineIdx, i) => {
+        if (rhymeKeys[i] !== baselineRhyme) {
+          errorLines.add(lineIdx);
+        }
+      });
     }
   }
   
@@ -256,14 +264,24 @@ function renderLine(line: LineAnalysis, rhymeLetter: string, analysis: SonnetAna
         syllableSpan.className = `syllable ${stressClass}`;
         syllableSpan.textContent = syllableText;
         
-        // Check for meter error on this specific syllable
-        if (shouldCheckMeter && !line.meterValid && line.expectedStressPattern) {
+        // Check meter pattern and mark correct/incorrect stresses
+        if (line.expectedStressPattern) {
           const expectedIndex = globalSyllableIndex + i;
           if (expectedIndex < line.expectedStressPattern.length) {
             const expected = line.expectedStressPattern[expectedIndex];
             const actual = syllable.stress;
-            // Mark as error if expected stress (1) but got unstressed (0 or 2)
-            if (expected === 1 && actual !== 1) {
+            
+            // Check if this stress matches the expected iambic pattern (light-heavy)
+            // Expected 1 (heavy position) + actual 1 (primary stress) = correct!
+            if (expected === 1 && actual === 1) {
+              syllableSpan.classList.add('meter-correct');
+            }
+            // Expected 1 (heavy position) + actual 2 (secondary stress) = also correct!
+            else if (expected === 1 && actual === 2) {
+              syllableSpan.classList.add('meter-correct-secondary');
+            }
+            // Mark as error if expected stress (1) but got unstressed (0)
+            else if (shouldCheckMeter && !line.meterValid && expected === 1 && actual === 0) {
               syllableSpan.classList.add('meter-error');
             }
           }
@@ -424,6 +442,12 @@ analyzeBtn.addEventListener('click', () => {
     console.error('Analysis error:', error);
     output.innerHTML = `<p style="color: red;">Error analyzing sonnet: ${error}</p>`;
   }
+});
+
+// Clear button handler
+clearBtn.addEventListener('click', () => {
+  poemInput.value = '';
+  output.innerHTML = '<p style="color: #999; font-style: italic;">Enter a sonnet and click "Analyze Sonnet" to see the results.</p>';
 });
 
 // Load sample sonnet

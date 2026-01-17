@@ -147,54 +147,188 @@ export class DictionaryService {
 
   /**
    * Heuristic syllable count for unknown words
-   * Based on vowel groups in English
+   * Based on vowel groups and English pronunciation rules
+   * For other languages, this method should be overridden
    */
   private estimateSyllables(word: string): number {
-    const lower = word.toLowerCase();
-    // Count vowel groups (consecutive vowels = 1 syllable)
-    let count = 0;
-    let inVowelGroup = false;
+    if (this.currentLanguage === 'en') {
+      return this.estimateSyllablesEnglish(word);
+    }
+    // For other languages, add specific methods
+    // else if (this.currentLanguage === 'la') return this.estimateSyllablesLatin(word);
+    return this.estimateSyllablesEnglish(word); // Default fallback
+  }
+
+  /**
+   * Advanced English syllable estimation
+   * Implements comprehensive rules for better accuracy
+   */
+  private estimateSyllablesEnglish(word: string): number {
+    const lower = word.toLowerCase().replace(/[^a-z]/g, '');
+    if (lower.length === 0) return 1;
     
+    // Special cases - common words with irregular syllabification
+    const specialCases: { [key: string]: number } = {
+      // Single syllable despite multiple vowels
+      'are': 1, 'were': 1, 'where': 1, 'here': 1, 'there': 1,
+      'fire': 1, 'hour': 1, 'our': 1, 'your': 1,
+      'through': 1, 'though': 1, 'thought': 1, 'brought': 1,
+      'sure': 1, 'pure': 1, 'cure': 1,
+      
+      // Two syllables
+      'every': 2, 'prayer': 2, 'player': 2, 'layer': 2,
+      'being': 2, 'seeing': 2, 'doing': 2, 'going': 2,
+      
+      // Three syllables
+      'family': 3, 'library': 3, 'different': 3,
+      
+      // Common archaic/poetic words
+      'thee': 1, 'thou': 1, 'thy': 1, 'thine': 1,
+      'hath': 1, 'doth': 1, 'shalt': 1, 'wilt': 1,
+      'ere': 1, 'oft': 1, 'nigh': 1,
+      'oer': 1, 'eer': 1, 'neer': 1, // o'er, e'er, ne'er
+      'tis': 1, 'twas': 1, 'twere': 1,
+    };
+    
+    if (specialCases[lower]) {
+      return specialCases[lower];
+    }
+    
+    let count = 0;
+    const vowels = 'aeiouy';
+    let previousWasVowel = false;
+    
+    // Count vowel groups
     for (let i = 0; i < lower.length; i++) {
       const char = lower[i];
-      if ('aeiouy'.includes(char)) {
-        if (!inVowelGroup) {
-          count++;
-          inVowelGroup = true;
-        }
-      } else {
-        inVowelGroup = false;
+      const isVowel = vowels.includes(char);
+      
+      if (isVowel && !previousWasVowel) {
+        count++;
+      }
+      previousWasVowel = isVowel;
+    }
+    
+    // Apply English-specific rules
+    
+    // Rule 1: Silent 'e' at the end
+    if (lower.endsWith('e')) {
+      // But not after certain patterns
+      if (count > 1 && !lower.match(/(le|re|ne|me|he|se|ze|ve|de|ge|te|ce|pe)$/)) {
+        count--;
+      }
+      // Exceptions: -le, -tle, -ble, -ple, etc. after consonant
+      if (lower.match(/[^aeiou]le$/)) {
+        // 'le' after consonant adds a syllable (e.g., "table" = 2)
+        // Already counted correctly, do nothing
       }
     }
     
-    // Silent 'e' at the end
-    if (lower.endsWith('e') && count > 1) {
-      count--;
+    // Rule 2: -ed ending
+    if (lower.endsWith('ed')) {
+      // Usually doesn't add syllable except after 'd' or 't'
+      if (!lower.match(/[dt]ed$/)) {
+        count--;
+      }
     }
     
-    // Words like 'fire', 'hour' often 1 syllable
-    if (lower.match(/^(fire|hour|our)$/)) {
-      count = 1;
+    // Rule 3: -es ending
+    if (lower.endsWith('es') && lower.length > 2) {
+      const beforeEs = lower.slice(-3, -2);
+      // -es adds syllable after s, z, x, ch, sh (e.g., "boxes", "wishes")
+      if (!'szx'.includes(beforeEs) && !lower.endsWith('ches') && !lower.endsWith('shes')) {
+        count--;
+      }
     }
+    
+    // Rule 4: -ing, -ting, -ding usually don't add extra syllable
+    // (already handled by vowel counting, but verify)
+    
+    // Rule 5: Diphthongs that should be one syllable
+    // ea, ee, oo, ou, oi, ay, ey, ow are usually one vowel sound
+    // (already handled by consecutive vowel grouping)
+    
+    // Rule 6: -tion, -sion, -cion endings
+    if (lower.match(/(tion|sion|cion)$/)) {
+      // These are usually 2 syllables: -ti-on, -si-on
+      // The 'io' is counted as one vowel group, but should be 2
+      count++;
+    }
+    
+    // Rule 7: -ious, -eous endings
+    if (lower.match(/(ious|eous)$/)) {
+      // e.g., "curious" = 3, "gorgeous" = 2
+      // 'ious' has 2 syllable sounds despite consecutive vowels
+      count++;
+    }
+    
+    // Rule 8: -ia, -iu, -io at the end often form separate syllable
+    if (lower.match(/(ia|iu|io)$/) && lower.length > 3) {
+      // e.g., "California" - 'ia' is separate
+      const before = lower[lower.length - 3];
+      if (!vowels.includes(before)) {
+        count++;
+      }
+    }
+    
+    // Rule 9: Three+ consecutive vowels might be multiple syllables
+    const tripleVowelMatch = lower.match(/[aeiouy]{3,}/g);
+    if (tripleVowelMatch) {
+      for (const match of tripleVowelMatch) {
+        // "beautiful" has "eau" but it's 1 syllable in that context
+        // Add logic for specific patterns if needed
+      }
+    }
+    
+    // Rule 10: Y between consonants acts as vowel
+    // (already handled by including 'y' in vowels)
     
     return Math.max(1, count); // At least 1 syllable
   }
 
   /**
    * Create fallback analysis for unknown words
+   * Attempts to guess stress patterns based on English rules
    */
   private createFallbackAnalysis(word: string): WordAnalysis {
     const syllableCount = this.estimateSyllables(word);
     const syllables: Syllable[] = [];
     
-    // Create simple syllable structure
-    // Assume first syllable has primary stress for single-syllable words
-    // For multi-syllable words, guess stress on first or second syllable
+    // Guess stress position based on syllable count and word patterns
+    let stressPosition = 0; // Which syllable gets primary stress (0-indexed)
+    
+    if (syllableCount === 1) {
+      stressPosition = 0;
+    } else if (syllableCount === 2) {
+      // For 2-syllable words, stress is often on first syllable
+      // But suffixes like -tion, -ment, -ly shift stress earlier
+      const lower = word.toLowerCase();
+      if (lower.match(/(ment|ness|less|ful|ly)$/)) {
+        stressPosition = 0; // Stress before suffix
+      } else if (lower.match(/(tion|sion|ic)$/)) {
+        stressPosition = 0; // Stress before -tion
+      } else {
+        stressPosition = 0; // Default: first syllable
+      }
+    } else if (syllableCount >= 3) {
+      // For 3+ syllable words, stress is often on first or second syllable
+      const lower = word.toLowerCase();
+      if (lower.match(/(tion|sion)$/)) {
+        stressPosition = Math.max(0, syllableCount - 3); // Before -tion
+      } else if (lower.match(/(ic|ical)$/)) {
+        stressPosition = Math.max(0, syllableCount - 3); // Before -ic
+      } else if (lower.match(/(ity|ety)$/)) {
+        stressPosition = Math.max(0, syllableCount - 3); // Before -ity
+      } else {
+        stressPosition = Math.min(1, syllableCount - 1); // Second syllable or first
+      }
+    }
+    
+    // Create syllable structure
     for (let i = 0; i < syllableCount; i++) {
       const stress: 0 | 1 | 2 = 
-        syllableCount === 1 ? 1 : // Single syllable → stressed
-        i === 0 ? 1 :              // First syllable of multi-syllable word
-        0;                         // Other syllables
+        i === stressPosition ? 1 : // Primary stress
+        0;                          // Unstressed
       
       syllables.push({
         phonemes: [],

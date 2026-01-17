@@ -129,6 +129,8 @@
       border-radius: 5px;
       cursor: pointer;
       transition: transform 0.2s;
+      margin-right: 10px;
+      margin-bottom: 10px;
     }
 
     button:hover {
@@ -138,6 +140,14 @@
 
     button:active {
       transform: translateY(0);
+    }
+
+    .secondary-btn {
+      background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    }
+
+    .secondary-btn:hover {
+      background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
     }
 
     #output {
@@ -202,6 +212,16 @@
 
     .syllable.stress-2 {
       color: #f59e0b;
+      font-weight: 500;
+    }
+
+    .syllable.meter-correct {
+      color: #059669; /* 深绿色 - 符合抑扬格位置的主重音 */
+      font-weight: 600;
+    }
+
+    .syllable.meter-correct-secondary {
+      color: #10b981; /* 浅绿色 - 符合抑扬格位置的次重音 */
       font-weight: 500;
     }
 
@@ -311,6 +331,9 @@
     <header>
       <h1>🌹 Sonnet Checker</h1>
       <p>Analyze rhyme schemes and meter patterns in your poetry</p>
+      <a href="rhyme-helper.html" style="display: inline-block; margin-top: 10px; color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 5px; font-size: 0.9em;">
+        🎵 Rhyme Helper
+      </a>
     </header>
 
     <div class="main-content">
@@ -346,6 +369,7 @@ Thou art more lovely and more temperate..."></textarea>
         </div>
 
         <button id="analyzeBtn">Analyze Sonnet</button>
+        <button id="clearBtn" class="secondary-btn">Clear All</button>
 
         <div class="legend">
           <h4>Legend:</h4>

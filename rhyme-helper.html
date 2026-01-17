@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rhyme Helper - Sonnet Writing Assistant</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Georgia', serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #667eea;
+    }
+
+    h1 {
+      color: #667eea;
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 1.1em;
+    }
+
+    .nav-link {
+      display: inline-block;
+      margin-top: 10px;
+      color: #667eea;
+      text-decoration: none;
+      font-size: 0.9em;
+    }
+
+    .nav-link:hover {
+      text-decoration: underline;
+    }
+
+    .search-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      font-size: 1.1em;
+      font-family: 'Georgia', serif;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    button {
+      padding: 12px 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .info-text {
+      color: #666;
+      font-size: 0.9em;
+      font-style: italic;
+    }
+
+    .results-section {
+      margin-top: 30px;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #667eea;
+    }
+
+    .results-header h2 {
+      color: #667eea;
+      font-size: 1.8em;
+    }
+
+    .result-count {
+      color: #666;
+      font-size: 1em;
+    }
+
+    .word-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px;
+    }
+
+    .word-card {
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+      border: 2px solid #e0e0e0;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .word-card:hover {
+      background-color: #e8e8ff;
+      border-color: #667eea;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .word-card .word {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .word-card .phonemes {
+      font-size: 0.85em;
+      color: #666;
+      font-family: monospace;
+    }
+
+    .word-card .syllables {
+      font-size: 0.8em;
+      color: #999;
+      margin-top: 5px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #667eea;
+      font-size: 1.2em;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      font-style: italic;
+    }
+
+    .filter-section {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-section label {
+      color: #666;
+      font-weight: bold;
+    }
+
+    .filter-section select {
+      padding: 8px 12px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+
+    .filter-section select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    @media (max-width: 768px) {
+      .word-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎵 Rhyme Helper</h1>
+      <p class="subtitle">Find perfect rhymes for your sonnet</p>
+      <a href="index.html" class="nav-link">← Back to Sonnet Checker</a>
+    </header>
+
+    <div class="search-section">
+      <div class="search-box">
+        <input type="text" id="wordInput" placeholder="Enter a word (e.g., day, love, night)" />
+        <button id="searchBtn">Find Rhymes</button>
+      </div>
+      <p class="info-text">
+        Enter a word to find all words in the dictionary that rhyme with it.
+        Rhyme matching is based on pronunciation from the last stressed vowel to the end.
+      </p>
+    </div>
+
+    <div class="filter-section" id="filterSection" style="display: none;">
+      <label>Syllable Count:</label>
+      <select id="syllableFilter">
+        <option value="all">All</option>
+        <option value="1">1 syllable</option>
+        <option value="2">2 syllables</option>
+        <option value="3">3 syllables</option>
+        <option value="4+">4+ syllables</option>
+      </select>
+
+      <label>Sort by:</label>
+      <select id="sortFilter">
+        <option value="alpha">Alphabetical</option>
+        <option value="syllables">Syllable Count</option>
+        <option value="common">Most Common</option>
+      </select>
+    </div>
+
+    <div class="results-section" id="resultsSection" style="display: none;">
+      <div class="results-header">
+        <h2>Rhyming Words</h2>
+        <span class="result-count" id="resultCount">0 words found</span>
+      </div>
+      <div class="word-grid" id="wordGrid"></div>
+    </div>
+
+    <div id="loadingIndicator" class="loading" style="display: none;">
+      Loading dictionary...
+    </div>
+  </div>
+
+  <script type="module">
+    import { DictionaryService } from './src/dictionary.js';
+    import { getDictionaryUrl } from './src/config.js';
+
+    const wordInput = document.getElementById('wordInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const resultsSection = document.getElementById('resultsSection');
+    const filterSection = document.getElementById('filterSection');
+    const wordGrid = document.getElementById('wordGrid');
+    const resultCount = document.getElementById('resultCount');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const syllableFilter = document.getElementById('syllableFilter');
+    const sortFilter = document.getElementById('sortFilter');
+
+    const dictionary = new DictionaryService();
+    let dictionaryData = null;
+    let allRhymes = [];
+
+    // Load dictionary on startup
+    async function loadDictionary() {
+      loadingIndicator.style.display = 'block';
+      try {
+        const response = await fetch(getDictionaryUrl('en'));
+        if (!response.ok) {
+          throw new Error('Failed to load dictionary');
+        }
+        dictionaryData = await response.json();
+        await dictionary.loadDictionary(dictionaryData, 'en');
+        console.log('Dictionary loaded successfully');
+        loadingIndicator.style.display = 'none';
+      } catch (error) {
+        console.error('Error loading dictionary:', error);
+        loadingIndicator.innerHTML = '<p style="color: red;">Failed to load dictionary. Please refresh the page.</p>';
+      }
+    }
+
+    // Find all rhyming words
+    function findRhymes(word) {
+      if (!dictionaryData) return [];
+
+      const phonemes = dictionary.lookup(word);
+      if (!phonemes) {
+        alert(`Word "${word}" not found in dictionary.`);
+        return [];
+      }
+
+      const targetRhymeKey = dictionary.extractRhymeKey(phonemes);
+      if (!targetRhymeKey) {
+        alert(`Could not extract rhyme key for "${word}".`);
+        return [];
+      }
+
+      console.log(`Finding rhymes for "${word}" with rhyme key: ${targetRhymeKey}`);
+
+      const rhymes = [];
+      for (const [dictWord, pronunciations] of Object.entries(dictionaryData)) {
+        if (dictWord === word.toLowerCase()) continue; // Skip the word itself
+
+        const wordPhonemes = pronunciations[0];
+        const rhymeKey = dictionary.extractRhymeKey(wordPhonemes);
+
+        if (rhymeKey === targetRhymeKey) {
+          const syllables = dictionary.extractSyllables(wordPhonemes);
+          rhymes.push({
+            word: dictWord,
+            phonemes: wordPhonemes,
+            syllableCount: syllables.length,
+            rhymeKey: rhymeKey
+          });
+        }
+      }
+
+      return rhymes;
+    }
+
+    // Apply filters and sorting
+    function filterAndSort(rhymes) {
+      let filtered = [...rhymes];
+
+      // Filter by syllable count
+      const syllableFilterValue = syllableFilter.value;
+      if (syllableFilterValue !== 'all') {
+        if (syllableFilterValue === '4+') {
+          filtered = filtered.filter(r => r.syllableCount >= 4);
+        } else {
+          const count = parseInt(syllableFilterValue);
+          filtered = filtered.filter(r => r.syllableCount === count);
+        }
+      }
+
+      // Sort
+      const sortValue = sortFilter.value;
+      if (sortValue === 'alpha') {
+        filtered.sort((a, b) => a.word.localeCompare(b.word));
+      } else if (sortValue === 'syllables') {
+        filtered.sort((a, b) => a.syllableCount - b.syllableCount);
+      } else if (sortValue === 'common') {
+        // Simple heuristic: shorter words are often more common
+        filtered.sort((a, b) => a.word.length - b.word.length);
+      }
+
+      return filtered;
+    }
+
+    // Display rhyming words
+    function displayRhymes(rhymes) {
+      wordGrid.innerHTML = '';
+
+      if (rhymes.length === 0) {
+        wordGrid.innerHTML = '<div class="no-results">No rhyming words found.</div>';
+        resultCount.textContent = '0 words found';
+        return;
+      }
+
+      resultCount.textContent = `${rhymes.length} word${rhymes.length > 1 ? 's' : ''} found`;
+
+      for (const rhyme of rhymes) {
+        const card = document.createElement('div');
+        card.className = 'word-card';
+        card.onclick = () => {
+          wordInput.value = rhyme.word;
+          searchBtn.click();
+        };
+
+        const wordDiv = document.createElement('div');
+        wordDiv.className = 'word';
+        wordDiv.textContent = rhyme.word;
+
+        const phonemesDiv = document.createElement('div');
+        phonemesDiv.className = 'phonemes';
+        phonemesDiv.textContent = rhyme.phonemes.join(' ');
+
+        const syllablesDiv = document.createElement('div');
+        syllablesDiv.className = 'syllables';
+        syllablesDiv.textContent = `${rhyme.syllableCount} syllable${rhyme.syllableCount > 1 ? 's' : ''}`;
+
+        card.appendChild(wordDiv);
+        card.appendChild(phonemesDiv);
+        card.appendChild(syllablesDiv);
+        wordGrid.appendChild(card);
+      }
+    }
+
+    // Search handler
+    function handleSearch() {
+      const word = wordInput.value.trim().toLowerCase();
+      if (!word) {
+        alert('Please enter a word.');
+        return;
+      }
+
+      allRhymes = findRhymes(word);
+      
+      if (allRhymes.length > 0) {
+        resultsSection.style.display = 'block';
+        filterSection.style.display = 'flex';
+        const filtered = filterAndSort(allRhymes);
+        displayRhymes(filtered);
+      } else {
+        resultsSection.style.display = 'block';
+        filterSection.style.display = 'none';
+        displayRhymes([]);
+      }
+    }
+
+    // Event listeners
+    searchBtn.addEventListener('click', handleSearch);
+    wordInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleSearch();
+      }
+    });
+
+    syllableFilter.addEventListener('change', () => {
+      if (allRhymes.length > 0) {
+        const filtered = filterAndSort(allRhymes);
+        displayRhymes(filtered);
+      }
+    });
+
+    sortFilter.addEventListener('change', () => {
+      if (allRhymes.length > 0) {
+        const filtered = filterAndSort(allRhymes);
+        displayRhymes(filtered);
+      }
+    });
+
+    // Load dictionary on page load
+    loadDictionary();
+
+    console.log('Rhyme Helper loaded successfully!');
+  </script>
+</body>
+</html>
