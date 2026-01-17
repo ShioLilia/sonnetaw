@@ -226,14 +226,24 @@
     }
 
     .syllable.meter-correct-unstressed {
-      color: #34d399; /* Lighter green - unstressed syllable in correct metrical position */
+      color: inherit; /* Black text - unstressed syllable in correct metrical position */
     }
 
     .syllable.meter-error {
-      background-color: #ffe4e4;
+      background-color: #ffb3b3;
+      color: inherit; /* Black text with red background */
       padding: 2px 4px;
       border-radius: 3px;
-      border: 1px solid #ffb3b3;
+    }
+
+    .syllable.meter-warning-primary {
+      color: #d97706; /* Dark yellow - primary stress in unstressed position */
+      font-weight: 600;
+    }
+
+    .syllable.meter-warning-secondary {
+      color: #f59e0b; /* Yellow - secondary stress in unstressed position */
+      font-weight: 500;
     }
 
     .word-not-found {
@@ -405,16 +415,16 @@ Thou art more lovely and more temperate..."></textarea>
         <div class="legend">
           <h4>Legend:</h4>
           <div class="legend-item">
-            <span style="color: #d97706; font-weight: 600;">Stressed</span>
-            <span style="color: #999;"> - Primary stress (1)</span>
+            <span style="color: #059669; font-weight: 600;">Green</span>
+            <span style="color: #999;"> - Stressed syllable in correct position</span>
           </div>
           <div class="legend-item">
-            <span style="color: #f59e0b; font-weight: 500;">Stressed</span>
-            <span style="color: #999;"> - Secondary stress (2)</span>
+            <span style="color: #d97706; font-weight: 600;">Yellow</span>
+            <span style="color: #999;"> - Stressed syllable in unstressed position</span>
           </div>
           <div class="legend-item">
-            <span class="legend-box" style="background-color: #ffe4e4; border: 1px solid #ffb3b3;"></span>
-            <span>Meter Error</span>
+            <span class="legend-box" style="background-color: #ffb3b3;"></span>
+            <span>Red background - Unstressed syllable in stressed position</span>
           </div>
           <div class="legend-item">
             <span class="legend-box" style="background-color: #e8e8e8;"></span>

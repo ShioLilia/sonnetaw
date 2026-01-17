@@ -155,16 +155,15 @@ export class SonnetAnalyzer {
 
   /**
    * Strict meter checking for non-iambic meters
-   * Requires exact match of stress pattern
+   * Requires exact match of stress pattern, but allows stressed syllables in unstressed positions
    */
   private checkStrictMeter(actual: StressPattern, expected: StressPattern): boolean {
     for (let i = 0; i < expected.length; i++) {
-      if (expected[i] === 1 && actual[i] !== 1) {
-        return false; // Expected primary stress, got something else
+      if (expected[i] === 1 && actual[i] === 0) {
+        return false; // Expected primary stress, got unstressed - error
       }
-      if (expected[i] === 0 && actual[i] === 1) {
-        return false; // Expected unstressed, got primary stress
-      }
+      // Allow stressed syllables (1 or 2) in unstressed positions (expected === 0)
+      // This makes strict mode less strict as requested
     }
     return true;
   }

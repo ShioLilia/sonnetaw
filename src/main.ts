@@ -273,7 +273,6 @@ function renderLine(line: LineAnalysis, rhymeLetter: string, analysis: SonnetAna
             const expected = line.expectedStressPattern[expectedIndex];
             const actual = syllable.stress;
             
-            // Mark correct matches with green
             if (expected === 1 && actual === 1) {
               // Expected stress position with primary stress - correct!
               syllableSpan.classList.add('meter-correct');
@@ -283,12 +282,15 @@ function renderLine(line: LineAnalysis, rhymeLetter: string, analysis: SonnetAna
             } else if (expected === 0 && actual === 0) {
               // Expected unstressed position with no stress - correct!
               syllableSpan.classList.add('meter-correct-unstressed');
-            } 
-            // Mark errors with red/pink only when line is invalid
-            else if (!line.meterValid) {
-              if (expected === 1 && actual === 0) {
-                // Expected stress but got unstressed - error!
-                syllableSpan.classList.add('meter-error');
+            } else if (expected === 1 && actual === 0) {
+              // Expected stress but got unstressed - error! (black text with red background)
+              syllableSpan.classList.add('meter-error');
+            } else if (expected === 0 && (actual === 1 || actual === 2)) {
+              // Stressed syllable in unstressed position - warning (yellow/dark yellow text)
+              if (actual === 1) {
+                syllableSpan.classList.add('meter-warning-primary');
+              } else {
+                syllableSpan.classList.add('meter-warning-secondary');
               }
             }
           }
