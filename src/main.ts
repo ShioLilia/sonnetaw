@@ -65,6 +65,8 @@ loadDictionary();
 const languageSelect = document.getElementById('languageSelect') as HTMLSelectElement;
 const poemInput = document.getElementById('poemInput') as HTMLTextAreaElement;
 const sonnetForm = document.getElementById('sonnetForm') as HTMLSelectElement;
+const meterMode = document.getElementById('meterMode') as HTMLSelectElement;
+const intelligentMode = document.getElementById('intelligentMode') as HTMLInputElement;
 const analyzeBtn = document.getElementById('analyzeBtn') as HTMLButtonElement;
 const clearBtn = document.getElementById('clearBtn') as HTMLButtonElement;
 const output = document.getElementById('output') as HTMLDivElement;
@@ -265,24 +267,29 @@ function renderLine(line: LineAnalysis, rhymeLetter: string, analysis: SonnetAna
         syllableSpan.textContent = syllableText;
         
         // Check meter pattern and mark correct/incorrect stresses
-        if (line.expectedStressPattern) {
+        if (line.expectedStressPattern && shouldCheckMeter) {
           const expectedIndex = globalSyllableIndex + i;
           if (expectedIndex < line.expectedStressPattern.length) {
             const expected = line.expectedStressPattern[expectedIndex];
             const actual = syllable.stress;
             
-            // Check if this stress matches the expected iambic pattern (light-heavy)
-            // Expected 1 (heavy position) + actual 1 (primary stress) = correct!
+            // Mark correct matches with green
             if (expected === 1 && actual === 1) {
+              // Expected stress position with primary stress - correct!
               syllableSpan.classList.add('meter-correct');
-            }
-            // Expected 1 (heavy position) + actual 2 (secondary stress) = also correct!
-            else if (expected === 1 && actual === 2) {
+            } else if (expected === 1 && actual === 2) {
+              // Expected stress position with secondary stress - also correct!
               syllableSpan.classList.add('meter-correct-secondary');
-            }
-            // Mark as error if expected stress (1) but got unstressed (0)
-            else if (shouldCheckMeter && !line.meterValid && expected === 1 && actual === 0) {
-              syllableSpan.classList.add('meter-error');
+            } else if (expected === 0 && actual === 0) {
+              // Expected unstressed position with no stress - correct!
+              syllableSpan.classList.add('meter-correct-unstressed');
+            } 
+            // Mark errors with red/pink only when line is invalid
+            else if (!line.meterValid) {
+              if (expected === 1 && actual === 0) {
+                // Expected stress but got unstressed - error!
+                syllableSpan.classList.add('meter-error');
+              }
             }
           }
         }
@@ -294,11 +301,21 @@ function renderLine(line: LineAnalysis, rhymeLetter: string, analysis: SonnetAna
       // Add overall word tooltip
       wordSpan.title = `Syllables: ${word.syllables.length}, Stress pattern: ${word.syllables.map(s => s.stress).join('')}`;
     } else {
-      // Word not found in dictionary - add gray background
+      // Word not found in dictionary - show with estimated stress pattern
       const notFoundSpan = document.createElement('span');
       notFoundSpan.className = 'word-not-found';
+      
+      // Display word with estimated stress markers (similar to CMU format)
+      const stressPattern = word.syllables.map(s => s.stress).join('');
       notFoundSpan.textContent = word.originalWord;
-      notFoundSpan.title = 'Word not found in dictionary';
+      
+      // Create a tooltip showing the estimated pronunciation
+      const estimatedPronunciation = word.syllables.map((s, i) => {
+        const syllableNum = i + 1;
+        return `[syllable${syllableNum}:${s.stress}]`;
+      }).join(' ');
+      
+      notFoundSpan.title = `Word not in dictionary\nEstimated: ${word.syllables.length} syllable${word.syllables.length !== 1 ? 's' : ''}\nStress pattern: ${stressPattern}\n${estimatedPronunciation}`;
       wordSpan.appendChild(notFoundSpan);
     }
 
@@ -436,7 +453,10 @@ analyzeBtn.addEventListener('click', () => {
   }
 
   try {
-    const analysis = analyzer.analyzeSonnet(text, currentForm);
+    const analysis = analyzer.analyzeSonnet(text, currentForm, {
+      strict: meterMode.value === 'strict',
+      intelligent: intelligentMode.checked
+    });
     renderAnalysis(analysis);
   } catch (error) {
     console.error('Analysis error:', error);

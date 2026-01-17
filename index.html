@@ -216,13 +216,17 @@
     }
 
     .syllable.meter-correct {
-      color: #059669; /* 深绿色 - 符合抑扬格位置的主重音 */
+      color: #059669; /* Dark green - primary stress in correct metrical position */
       font-weight: 600;
     }
 
     .syllable.meter-correct-secondary {
-      color: #10b981; /* 浅绿色 - 符合抑扬格位置的次重音 */
+      color: #10b981; /* Light green - secondary stress in correct metrical position */
       font-weight: 500;
+    }
+
+    .syllable.meter-correct-unstressed {
+      color: #34d399; /* Lighter green - unstressed syllable in correct metrical position */
     }
 
     .syllable.meter-error {
@@ -359,6 +363,27 @@
             <select id="sonnetForm">
               <option value="shakespearean">Shakespearean</option>
             </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="meterMode">
+              Meter Checking Mode
+              <small>(Strictness of meter validation)</small>
+            </label>
+            <select id="meterMode">
+              <option value="lenient">Lenient (Recommended)</option>
+              <option value="strict">Strict</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="intelligentMode">
+              <input type="checkbox" id="intelligentMode" checked style="width: auto; margin-right: 5px;">
+              Intelligent Mode
+              <small>(Estimate unknown words)</small>
+            </label>
           </div>
         </div>
 

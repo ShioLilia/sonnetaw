@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { resolve } from 'path';
 
 export default defineConfig({
   base: process.env.TAURI_ENV ? '/' : '/src/sonnetaw/', // Tauri 使用根路径，Web 使用子路径
@@ -8,6 +9,10 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       external: [],
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        helper: resolve(__dirname, 'rhyme-helper.html')
+      },
       output: {
         manualChunks: undefined
       }
