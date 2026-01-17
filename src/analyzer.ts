@@ -159,7 +159,7 @@ export class SonnetAnalyzer {
    */
   private checkStrictMeter(actual: StressPattern, expected: StressPattern): boolean {
     for (let i = 0; i < expected.length; i++) {
-      if (expected[i] === 1 && actual[i] !== 1 && actual[i] !== 2) {
+      if (expected[i] === 1 && actual[i] === 0) {
         return false; // Expected primary stress, got unstressed - error
       }
       // Allow stressed syllables (1 or 2) in unstressed positions (expected === 0)
