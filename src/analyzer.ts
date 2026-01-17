@@ -114,7 +114,7 @@ export class SonnetAnalyzer {
     } else if (actual.length === expected.length - 1) {
       // One fewer syllable - try inserting unstressed at each position
       for (let insert = 0; insert <= actual.length; insert++) {
-        const fitted = [...actual.slice(0, insert), 0 as const, ...actual.slice(insert)];
+        const fitted = [...actual.slice(0, insert), 0, ...actual.slice(insert)] as StressPattern;
         if (meterType === 'iambic') {
           if (this.checkIambicMeter(fitted, expected)) return true;
         } else {
